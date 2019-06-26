@@ -2,7 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
 
-from settings import *
+from model_settings import *
 
 class Animation:
     color_yellow_offset = 0.2

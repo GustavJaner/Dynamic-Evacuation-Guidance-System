@@ -2,7 +2,7 @@ import numpy as np
 from scipy.ndimage import gaussian_filter
 
 from rand_int import random_int_to
-from settings import *
+from model_settings import *
 
 class Grid:
     cell_width = 1
