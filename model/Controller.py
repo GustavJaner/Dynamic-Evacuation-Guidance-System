@@ -12,15 +12,15 @@ class Controller:
         self.num_steps = num_steps
 
     def initialize_model(self):
-        self.map = Grid()
-        self.map.make_random_person()
-        self.map.make_random_person()
+        self.grid = Grid()
+        self.grid.make_random_person()
+        self.grid.make_random_person()
 
-        self.map.make_random_fire()
-        self.map.make_random_fire()
+        self.grid.make_random_fire()
+        self.grid.make_random_fire()
 
     def initialize_animation(self):
-        self.animation = Animation(self.map)
+        self.animation = Animation(self.grid)
 
     def start_simulation(self):
         print("Start simulation")
@@ -29,8 +29,8 @@ class Controller:
         self.end_simulation()
 
     def update(self, i):
-        self.map.simulate_step()
-        self.animation.update_data(self.map)
+        self.grid.simulate_step()
+        self.animation.update_data(self.grid)
 
     def end_simulation(self):
         ani = self.animation.make_animation(self.num_steps)

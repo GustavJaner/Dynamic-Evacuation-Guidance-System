@@ -7,14 +7,42 @@ from model_settings import *
 class Grid:
     cell_width = 1
     cell_height = 1
-    num_rows = 20
-    num_columns = 40
     t_base = 0
     mat_init = 1
 
     def __init__(self):
-        self.matrix = np.zeros((Grid.num_rows, Grid.num_columns, len(indices)))
+        self.num_rows = self.get_num_row()
+        self.num_cols = self.get_num_col()
+        self.map = self.transcode_map()
+        self.matrix = np.zeros((self.num_rows, self.num_cols, len(indices)))
         self.populate()
+
+    def get_num_row(self):
+        row = 0
+        for line in open("map.txt", "r"):
+            row += 1
+        return row
+
+    def get_num_col(self):
+        col = 0
+        line = open("map.txt", "r").readline()
+        for ch in line:
+            if(ch != '\n'):
+                col += 1
+        return col
+
+    def transcode_map(self):
+        map = np.chararray((self.num_rows, self.num_cols))
+        i = 0
+        j = 0
+        for line in open("map.txt", "r"):
+            j = 0
+            for ch in line:
+                if(ch != '\n'):
+                    map[i][j] = ch
+                    j += 1
+            i += 1
+        return map
 
     def populate(self):
         self.initialize_people()
@@ -36,7 +64,8 @@ class Grid:
         self.matrix[:, :, indices["temp"]] = Grid.t_base
 
     def initialize_material(self):
-        self.matrix[:, :, indices["material"]] = np.random.random((self.num_rows, self.num_columns)) * Grid.mat_init
+        self.matrix[:, :, indices["material"]] = np.random.random((self.num_rows, self.num_cols)) * Grid.mat_init
+
 
     def make_random_person(self):
         cell = self.get_random_cell()
@@ -62,7 +91,7 @@ class Grid:
 
     def get_random_neighbor(self, i, j):
         r1 = self.get_random_1d_neighbor(self.num_rows, i)
-        r2 = self.get_random_1d_neighbor(self.num_columns, j)
+        r2 = self.get_random_1d_neighbor(self.num_cols, j)
         return r1, r2
 
     def get_attribute(self, attribute, row=-1, column=-1):
@@ -77,7 +106,7 @@ class Grid:
 
     def get_random_cell(self):
         r1 = random_int_to(self.num_rows - 1)
-        r2 = random_int_to(self.num_columns - 1)
+        r2 = random_int_to(self.num_cols - 1)
         return self.matrix[r1, r2]
 
     def spread_fire(self):
@@ -118,7 +147,7 @@ class Grid:
         people = []
         people_grid = self.get_attribute("people")
         for i in range(self.num_rows):
-            for j in range(self.num_columns):
+            for j in range(self.num_cols):
                 people_in_cell = people_grid[i, j]
                 if people_in_cell > 0:
                     (n1, n2) = self.get_random_neighbor(i, j)

@@ -52,11 +52,17 @@ class Animation:
         image[:, :, 1] -= state.get_attribute("people")
         image[:, :, 2] += state.get_attribute("people")
 
+    def make_walls_color(self, state, image):
+        image[:, :, 0] = 0.5
+        image[:, :, 1] = 0.5
+        image[:, :, 2] = 0.5
+
     def make_image_colors(self, state):
-        image = np.ones((self.grid.num_rows, self.grid.num_columns, 3))
+        image = np.ones((self.grid.num_rows, self.grid.num_cols, 3))
         self.make_fire_color(state, image)
         self.make_people_color(state, image)
         self.make_smoke_color(state, image)
+        # self.make_walls_color(state, image)
         self.bound_colors(image, 0, 1)
         return image
 
@@ -77,7 +83,7 @@ class Animation:
         return [self.im]
 
     def update_data(self, state):
-        self.data.append(self.to_image(state))
+        self.data.append(self.to_image(state)) # state == updated grid
 
     def update(self, num):
         self.im.set_data(self.data[num])
