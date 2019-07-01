@@ -13,6 +13,7 @@ class Controller:
 
     def initialize_model(self):
         self.grid = Grid()
+        self.grid.print_map()
         self.grid.make_random_person()
         self.grid.make_random_person()
 

@@ -14,34 +14,36 @@ class Grid:
         self.num_rows = self.get_num_row()
         self.num_cols = self.get_num_col()
         self.map = self.transcode_map()
+
         self.matrix = np.zeros((self.num_rows, self.num_cols, len(indices)))
         self.populate()
 
     def get_num_row(self):
         row = 0
-        for line in open("map.txt", "r"):
+        for line in open(map_file, "r"):
             row += 1
         return row
 
     def get_num_col(self):
         col = 0
-        line = open("map.txt", "r").readline()
+        line = open(map_file, "r").readline()
         for ch in line:
             if(ch != '\n'):
                 col += 1
         return col
 
     def transcode_map(self):
-        map = np.chararray((self.num_rows, self.num_cols))
+        map = np.chararray((self.num_rows, self.num_cols), unicode=True)
         i = 0
         j = 0
-        for line in open("map.txt", "r"):
+        for line in open(map_file, "r"):
             j = 0
             for ch in line:
                 if(ch != '\n'):
                     map[i][j] = ch
                     j += 1
             i += 1
+
         return map
 
     def populate(self):
@@ -64,9 +66,22 @@ class Grid:
         self.matrix[:, :, indices["temp"]] = Grid.t_base
 
     def initialize_material(self):
+        # self.matrix[:, :, indices["material"]] = 1
         self.matrix[:, :, indices["material"]] = np.random.random((self.num_rows, self.num_cols)) * Grid.mat_init
+        self.traverse_map()
 
+    # TODO
+    # hastags(#) and percentages(%) represent walls of different material
+    def traverse_map(self):
+        for i in range(self.num_rows):
+            for j in range(self.num_cols):
+                if (self.map[i, j] == "#"):
+                    self.matrix[i, j][indices["material"]] = 0
+                if (self.map[i, j] == "%"):
+                    self.matrix[i, j][indices["material"]] = 0
 
+    # TODO
+    # cannot spawn person on wall (+cannot move to wall)
     def make_random_person(self):
         cell = self.get_random_cell()
         cell[indices["people"]] = 1
@@ -157,3 +172,6 @@ class Grid:
             # val = v - self.matrix[p1, p2, 0] - self.matrix[p1, p2, 2]
             people_grid[r, c] += v
         self.spread_fire()
+
+    def print_map(self):
+        print(np.matrix(self.map))

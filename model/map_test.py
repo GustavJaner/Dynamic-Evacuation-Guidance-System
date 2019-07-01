@@ -5,18 +5,18 @@ class Test:
         # self.fin = open("map.txt", "r")
         self.num_rows = self.num_rows()
         self.num_cols = self.num_cols()
-        self.map = np.chararray((self.num_rows, self.num_cols))
+        self.map = np.chararray((self.num_rows, self.num_cols), unicode=True)
         self.transcode_map()
 
     def num_rows(self):
         row = 0
-        for line in open("map.txt", "r"):
+        for line in open(map_file, "r"):
             row += 1
         return row
 
     def num_cols(self):
         col = 0
-        line = open("map.txt", "r").readline()
+        line = open(map_file, "r").readline()
         for ch in line:
             if(ch != '\n'):
                 col += 1
@@ -25,7 +25,7 @@ class Test:
     def transcode_map(self):
         i = 0
         j = 0
-        for line in open("map.txt", "r"):
+        for line in open(map_file, "r"):
             j = 0
             for ch in line:
                 if(ch != '\n'):

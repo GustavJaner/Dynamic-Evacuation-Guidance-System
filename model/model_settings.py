@@ -15,3 +15,5 @@ c_rad = 0.1
 speed = 60
 frequency = 200
 dt = 1 / frequency * speed
+
+map_file = "maps/map0.txt"
