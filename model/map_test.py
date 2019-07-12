@@ -1,5 +1,8 @@
 import numpy as np
 
+from model_settings import map_file
+
+
 class Test:
     def __init__(self):
         # self.fin = open("map.txt", "r")

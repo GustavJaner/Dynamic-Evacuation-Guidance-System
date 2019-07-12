@@ -1,8 +1,10 @@
 import numpy as np
-from scipy.ndimage import gaussian_filter
 
-from rand_int import random_int_to
+from FireDynamics import FireDynamics
+from PeopleDynamics import PeopleDynamics
 from model_settings import *
+from utils import *
+
 
 class Grid:
     cell_width = 1
@@ -14,8 +16,11 @@ class Grid:
         self.num_rows = self.get_num_row()
         self.num_cols = self.get_num_col()
         self.map = self.transcode_map()
+        self.fire_dynamics = FireDynamics()
+        self.people_dynamics = PeopleDynamics(self)
 
         self.matrix = np.zeros((self.num_rows, self.num_cols, len(indices)))
+        self.make_walls()
         self.populate()
 
     def get_num_row(self):
@@ -53,7 +58,11 @@ class Grid:
         self.initialize_temperature()
         self.initialize_material()
 
+    def fire_map(self):
+        return self.fire_dynamics.fire_map(self.matrix)
+
     def initialize_people(self):
+        print(indices["people"])
         self.matrix[:, :, indices["people"]] = 0
 
     def initialize_fire(self):
@@ -98,15 +107,9 @@ class Grid:
             self.matrix[mask_lower, i] = min_val
             self.matrix[mask_greater, i] = max_val
 
-    def get_random_1d_neighbor(self, n, i):
-        r = -n
-        while i + r < 0 or i + r >= n:
-            r = random_int_to(2) - 1
-        return i + r
-
     def get_random_neighbor(self, i, j):
-        r1 = self.get_random_1d_neighbor(self.num_rows, i)
-        r2 = self.get_random_1d_neighbor(self.num_cols, j)
+        r1 = get_random_1d_neighbor(self.num_rows, i)
+        r2 = get_random_1d_neighbor(self.num_cols, j)
         return r1, r2
 
     def get_attribute(self, attribute, row=-1, column=-1):
@@ -124,54 +127,15 @@ class Grid:
         r2 = random_int_to(self.num_cols - 1)
         return self.matrix[r1, r2]
 
-    def spread_fire(self):
-        material = self.get_attribute("material")
-        temp = self.get_attribute("temp")
-        fire = self.get_attribute("fire")
-        smoke = self.get_attribute("smoke")
-
-        self.update_smoke(fire, smoke)
-        self.update_temperature(fire, material, temp)
-        self.update_fire(material, temp)
-        self.update_material(fire)
-
-        self.bound_grid(0, 1)
-
-    def update_material(self, fire):
-        self.matrix[:, :, indices["material"]] -= fire * dt * c_burn
-
-    def update_fire(self, material, temp):
-        self.matrix[:, :, indices["fire"]] = material * temp * (temp > t_fire)
-
-    def update_temperature(self, fire, material, temp):
-        temp_conduct = gaussian_filter(temp, sigma=0.1, mode='nearest', order=2)
-        temp_rad = gaussian_filter(temp, sigma=7, mode='nearest')
-        temp_diff = (temp + dt * temp_rad) /(1 + dt)
-
-        self.matrix[:, :, indices["temp"]] = temp_diff
-        self.matrix[:, :, indices["temp"]] += temp_conduct * dt * 0.0001
-        self.matrix[:, :, indices["temp"]] += material * fire * dt
-
-    def update_smoke(self, fire, smoke):
-        smoke_around = gaussian_filter(smoke, sigma=(1, 1), mode='nearest', order=0)
-        smoke_diff = smoke_around - smoke
-        self.matrix[:, :, indices["smoke"]] += dt * smoke_diff
-        self.matrix[:, :, indices["smoke"]] += fire * dt
-
     def simulate_step(self):
-        people = []
-        people_grid = self.get_attribute("people")
-        for i in range(self.num_rows):
-            for j in range(self.num_cols):
-                people_in_cell = people_grid[i, j]
-                if people_in_cell > 0:
-                    (n1, n2) = self.get_random_neighbor(i, j)
-                    people.append((n1, n2, people_in_cell))
-                    people_grid[i, j] = 0
-        for (r, c, v) in people:
-            # val = v - self.matrix[p1, p2, 0] - self.matrix[p1, p2, 2]
-            people_grid[r, c] += v
-        self.spread_fire()
+        self.matrix = self.people_dynamics.update_people_dynamics()
+        self.matrix = self.fire_dynamics.update_fire_dynamics(self.matrix)
 
     def print_map(self):
         print(np.matrix(self.map))
+
+    def make_walls(self):
+        int_map = np.zeros(self.map.shape)
+        for w in wall_symbols:
+            int_map = int_map + (self.map == w) * wall_categories[w]
+        self.matrix[:, :, indices["walls"]] = int_map
