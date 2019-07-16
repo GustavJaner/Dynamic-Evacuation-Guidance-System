@@ -6,3 +6,8 @@ Cork case study - Dynamic Evacuation Guidance System
 - Generic spread of smoke
 - Dynamically find the optimal path to safest exit
 - Application to a real/relevant situation in Cork/ County Cork
+
+## Running the simulation
+```
+$ sh run-simulation.sh
+```

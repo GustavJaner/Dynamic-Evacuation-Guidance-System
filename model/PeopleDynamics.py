@@ -1,6 +1,6 @@
 import numpy as np
 
-from model_settings import *
+from config import *
 
 
 class PeopleDynamics:

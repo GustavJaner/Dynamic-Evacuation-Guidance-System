@@ -2,7 +2,7 @@ import numpy as np
 
 from FireDynamics import FireDynamics
 from PeopleDynamics import PeopleDynamics
-from model_settings import *
+from config import *
 from utils import *
 
 

@@ -1,6 +1,6 @@
 import random
 
-from model_settings import *
+from config import *
 
 
 def random_int_to(a):

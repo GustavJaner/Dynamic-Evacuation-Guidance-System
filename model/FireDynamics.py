@@ -1,7 +1,7 @@
 import numpy as np
 from scipy.ndimage import gaussian_filter
 
-from model_settings import *
+from config import *
 from utils import *
 
 
