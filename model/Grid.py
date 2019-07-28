@@ -89,16 +89,34 @@ class Grid:
                 if (self.map[i, j] == "%"):
                     self.matrix[i, j][indices["material"]] = 0
 
-    # TODO
-    # cannot spawn person on wall (+cannot move to wall)
     def make_random_person(self):
-        cell = self.get_random_cell()
+        cell = self.place_random_person()
         cell[indices["people"]] = 1
 
+    def place_random_person(self):
+        (row, col) = self.get_random_coord()
+        cell = self.map[row, col]
+
+        while (cell == "#" or cell == "%" or cell == "."):
+           (row, col) = self.get_random_coord()
+           cell = self.map[row, col]
+
+        return self.matrix[row, col]
+
     def make_random_fire(self):
-        cell = self.get_random_cell()
+        cell = self.place_random_fire()
         cell[indices["fire"]] = 1
         cell[indices["temp"]] = 1
+
+    def place_random_fire(self):
+        (row, col) = self.get_random_coord()
+        cell = self.map[row, col]
+
+        while (cell == "."):
+           (row, col) = self.get_random_coord()
+           cell = self.map[row, col]
+
+        return self.matrix[row, col]
 
     def bound_grid(self, min_val, max_val):
         for i in range(5):
@@ -107,10 +125,15 @@ class Grid:
             self.matrix[mask_lower, i] = min_val
             self.matrix[mask_greater, i] = max_val
 
+    def get_random_coord(self):
+        row = random_int_to(self.num_rows - 1)
+        col = random_int_to(self.num_cols - 1)
+        return row, col
+
     def get_random_neighbor(self, i, j):
-        r1 = get_random_1d_neighbor(self.num_rows, i)
-        r2 = get_random_1d_neighbor(self.num_cols, j)
-        return r1, r2
+        row = get_random_1d_neighbor(self.num_rows, i)
+        col = get_random_1d_neighbor(self.num_cols, j)
+        return row, col
 
     def get_attribute(self, attribute, row=-1, column=-1):
         if row < 0 and column < 0:
@@ -121,11 +144,6 @@ class Grid:
             return self.matrix[row, :, indices[attribute]]
         else:
             return self.matrix[row, column, indices[attribute]]
-
-    def get_random_cell(self):
-        r1 = random_int_to(self.num_rows - 1)
-        r2 = random_int_to(self.num_cols - 1)
-        return self.matrix[r1, r2]
 
     def simulate_step(self):
         self.matrix = self.people_dynamics.update_people_dynamics()

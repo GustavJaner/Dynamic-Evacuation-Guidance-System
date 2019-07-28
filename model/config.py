@@ -10,7 +10,8 @@ frequency = 200
 dt = 1 / frequency * speed
 
 # Map
-map_file = "maps/map0.txt"
+# map_file = "maps/map0.txt"
+map_file = "maps/art-centre.txt"
 wall_symbols = "%#"
 no_walls_symbol = '\''
 wall_categories = {"%": 1, "#": 2, no_walls_symbol: 0}
