@@ -19,4 +19,4 @@ just_wall_symbols = "%#"
 no_walls_symbol = '\''
 exit_symbol = 'E'
 wall_categories = {"%": 1, "#": 2, '.': 3, no_walls_symbol: 0, exit_symbol: 4}
-evacuation_alg = 'gas'
+evacuation_alg = 'dijkstra'  # or 'gas'
