@@ -1,4 +1,5 @@
 import numpy as np
+from scipy.sparse.csgraph import dijkstra
 
 from FireDynamics import FireDynamics
 from PeopleDynamics import PeopleDynamics
@@ -12,15 +13,20 @@ class Grid:
     mat_init = 1
 
     def __init__(self):
+        self.dijkstra_dist = 0
+        self.dijkstra_pred = 0
+        self.ng = 0
         self.num_rows = self.get_num_row()
         self.num_cols = self.get_num_col()
         self.map = self.transcode_map()
         self.fire_dynamics = FireDynamics()
         self.people_dynamics = PeopleDynamics(self)
+        self.exit_indices = []
 
         self.matrix = np.zeros((self.num_rows, self.num_cols, len(indices)))
         self.make_walls()
         self.populate()
+        self.make_dijkstra_array()
 
     def get_num_row(self):
         row = 0
@@ -32,7 +38,7 @@ class Grid:
         col = 0
         line = open(map_file, "r").readline()
         for ch in line:
-            if(ch != '\n'):
+            if (ch != '\n'):
                 col += 1
         return col
 
@@ -43,7 +49,7 @@ class Grid:
         for line in open(map_file, "r"):
             j = 0
             for ch in line:
-                if(ch != '\n'):
+                if (ch != '\n'):
                     map[i][j] = ch
                     j += 1
             i += 1
@@ -97,8 +103,8 @@ class Grid:
         cell = self.map[row, col]
 
         while (cell == "#" or cell == "%" or cell == "."):
-           (row, col) = self.get_random_coord()
-           cell = self.map[row, col]
+            (row, col) = self.get_random_coord()
+            cell = self.map[row, col]
 
         return self.matrix[row, col]
 
@@ -112,8 +118,8 @@ class Grid:
         cell = self.map[row, col]
 
         while (cell == "."):
-           (row, col) = self.get_random_coord()
-           cell = self.map[row, col]
+            (row, col) = self.get_random_coord()
+            cell = self.map[row, col]
 
         return self.matrix[row, col]
 
@@ -134,27 +140,162 @@ class Grid:
         col = get_random_1d_neighbor(self.num_cols, j)
         return row, col
 
-    def get_attraction_neighbor(self, i, j):
-        q1 = 1
-        q2 = 1
-        k = 1
+    def get_attraction_neighbor2(self, i, j):
         p = np.array([i, j])
         attraction_direction = 0
         size = np.shape(self.matrix)
         for x in range(size[0]):
             for y in range(size[1]):
-                if self.map[x, y] == 'E':
-                    exit = np.array([x, y])
-                    r = exit - p
-                    force = 1 / np.sum(r * r) ** 0.5
-                    force_dir = force * r
+                if self.map[x, y] == exit_symbol:
+                    force_dir = self.attract_exit(p, x, y)
                     attraction_direction += force_dir
-        # row = get_random_1d_neighbor(self.num_rows, i)
-        # col = get_random_1d_neighbor(self.num_cols, j)
-        row = int(round(i + attraction_direction[0]))
-        col = int(round(j + attraction_direction[1]))
-        # print(i, j, row, col)
+                if self.get_attribute("fire", x, y):
+                    force_dir = self.repel_fire(p, x, y)
+                    attraction_direction += force_dir
+                if self.map[x, y] in just_wall_symbols:
+                    force_dir = self.repel_wall(p, x, y)
+                    attraction_direction += force_dir
+        row = i + self.bound(attraction_direction[0], -1, 1)
+        col = j + self.bound(attraction_direction[1], -1, 1)
+        row = self.bound(int(round(row)), 0, size[0] - 1)
+        col = self.bound(int(round(col)), 0, size[1] - 1)
         return row, col
+
+    def get_row_col(self, index):
+        col = index % self.num_cols
+        row = index // self.num_cols
+        return row, col
+
+    def get_attraction_neighbor(self, i, j):
+        best_index = self.to_index(i, j)
+        if best_index in self.exit_indices:
+            return (i, j)
+        a = self.dijkstra_dist
+        b = self.dijkstra_pred
+        best = 100
+        for bi in b:
+            pred = bi[self.to_index(i, j)]
+            if pred == -9999:
+                continue
+            elif a[pred] < best:
+                best = a[pred]
+                best_index = pred
+        r, c = self.get_row_col(best_index)
+        print(i, j, list(map(self.get_row_col, self.exit_indices)), r, c)
+
+        # print(i, j, r, c, best_index)
+        return r, c
+
+        p = np.array([i, j])
+        attraction_direction = 0
+        for x in range(self.num_rows):
+            for y in range(self.num_cols):
+                if self.map[x, y] == exit_symbol:
+                    force_dir = self.attract_exit(p, x, y)
+                    attraction_direction += force_dir
+                if self.get_attribute("fire", x, y):
+                    force_dir = self.repel_fire(p, x, y)
+                    attraction_direction += force_dir
+                if self.map[x, y] in just_wall_symbols:
+                    force_dir = self.repel_wall(p, x, y)
+                    attraction_direction += force_dir
+        row = i + self.bound(attraction_direction[0], -1, 1)
+        col = j + self.bound(attraction_direction[1], -1, 1)
+        row = self.bound(int(round(row)), 0, self.num_rows - 1)
+        col = self.bound(int(round(col)), 0, self.num_cols - 1)
+        return row, col
+
+    def bound(self, a, lower, upper):
+        if a < lower:
+            return lower
+        if a > upper: return upper
+        return a
+
+    def make_dijkstra(self):
+        a, b = self.make_dijkstra_array()
+        result = np.ones_like(a[0]) * 100
+        for ai in a:
+            result = np.minimum(ai, result)
+        self.dijkstra_dist = result
+        self.dijkstra_pred = b
+
+    def to_index(self, i, j):
+        index = i * self.num_cols + j
+        return index
+
+    def make_dijkstra_array(self):
+        n = self.num_cols * self.num_rows
+        offset1 = self.num_cols - 1
+        offset2 = self.num_cols - 1
+        self.exit_indices = []
+        from scipy.sparse import csr_matrix
+        dijkstra_array = n * np.zeros((n, n))
+        for i in range(self.num_rows):
+            for j in range(self.num_cols):
+                terrain = self.map[i, j]
+                index = i * self.num_cols + j
+                # fff = self.to_index(i, j)
+                dijkstra_array[index, index] = 0
+                fire_here = self.get_attribute("fire", i, j)
+                if (terrain == no_walls_symbol or terrain == exit_symbol) and fire_here == 0:
+                    # if self.get_attribute("people", i, j) > 0:
+                    if (terrain == exit_symbol):
+                        self.exit_indices.append(index)
+                    coords = [(i - 1, j - 1), (i - 1, j), (i - 1, j + 1), (i, j - 1), (i, j + 1), (i + 1, j - 1),
+                              (i + 1, j), (i + 1, j + 1)]
+                    offsets = [offset1, offset1 + 1, offset1 + 2, -1, 1, offset2, offset2 + 1, offset2 + 2]
+                    for ii, (a, b) in enumerate(coords):
+                        if a < 0 or b < 0:
+                            pass
+                        elif a >= self.num_rows or b >= self.num_cols:
+                            pass
+                        elif self.map[a, b] in wall_symbols:
+                            pass
+                        elif self.get_attribute("fire", a, b) != 0:
+                            dijkstra_array[index + offsets[ii], index] = 1
+                        else:
+                            # dijkstra_array[index, index + offsets[ii]] = 1
+                            dijkstra_array[index + offsets[ii], index] = 1
+
+        G_sparse = csr_matrix(dijkstra_array)
+        a, b = dijkstra(G_sparse, directed=False, limit=100, indices=self.exit_indices, return_predecessors=True)
+        return a, b
+
+    def attract_exit(self, p, x, y):
+        exp = 2
+        exit = np.array([x, y])
+        r = exit - p
+        dividor = np.sum(np.abs(r ** exp))
+        dividor = dividor ** (1 / exp)
+        if dividor != 0:
+            force_dir = 10 / dividor * r
+        else:
+            force_dir = np.array([0, 0])
+        return force_dir
+
+    def repel_wall(self, p, x, y):
+        exp = 2
+        wall = np.array([x, y])
+        r = wall - p
+        dividor = np.sum(np.abs(r ** exp))
+        dividor = dividor ** (1 / exp)
+        if dividor != 0:
+            force_dir = 0.02 / dividor * r
+        else:
+            force_dir = np.array([0, 0])
+        return -1 * force_dir
+
+    def repel_fire(self, p, x, y):
+        exp = 2
+        fire = np.array([x, y])
+        r = fire - p
+        dividor = np.sum(np.abs(r ** exp))
+        dividor = dividor ** (1 / exp)
+        if dividor != 0:
+            force_dir = 0.1 / dividor * r
+        else:
+            force_dir = np.array([0, 0])
+        return -1 * force_dir
 
     def get_attribute(self, attribute, row=-1, column=-1):
         if row < 0 and column < 0:

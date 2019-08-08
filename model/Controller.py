@@ -1,12 +1,13 @@
 import matplotlib.pyplot as plt
 
-from Grid import Grid
 from Animation import Animation
+from Grid import Grid
+
 
 class Controller:
     'State of the simulation'
 
-    def __init__(self, num_steps=1000):
+    def __init__(self, num_steps=100):
         self.initialize_model()
         self.initialize_animation()
         self.num_steps = num_steps

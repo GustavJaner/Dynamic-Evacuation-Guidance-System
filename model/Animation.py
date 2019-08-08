@@ -61,8 +61,10 @@ class Animation:
         image = np.ones((self.grid.num_rows, self.grid.num_cols, 3))
         self.make_fire_color(state, image)
         self.make_people_color(state, image)
-        self.make_smoke_color(state, image)
+        # self.make_smoke_color(state, image)
         self.make_walls_color(state, image)
+        image[:, :, 0] = state.ng
+
         self.bound_colors(image, 0, 1)
         return image
 
