@@ -2,7 +2,6 @@ import numpy as np
 
 from FireDynamics import FireDynamics
 from PeopleDynamics import PeopleDynamics
-from config import *
 from utils import *
 
 
@@ -106,7 +105,7 @@ class Grid:
     def make_random_fire(self):
         cell = self.place_random_fire()
         cell[indices["fire"]] = 1
-        cell[indices["temp"]] = 1
+        cell[indices["temp"]] = FireDynamics.t_burn * 2
 
     def place_random_fire(self):
         (row, col) = self.get_random_coord()
@@ -156,4 +155,5 @@ class Grid:
         int_map = np.zeros(self.map.shape)
         for w in wall_symbols:
             int_map = int_map + (self.map == w) * wall_categories[w]
+        int_map = int_map + (self.map == exit_symbol) * wall_categories[exit_symbol]
         self.matrix[:, :, indices["walls"]] = int_map

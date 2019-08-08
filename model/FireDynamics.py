@@ -1,11 +1,15 @@
 import numpy as np
 from scipy.ndimage import gaussian_filter
 
-from config import *
 from utils import *
 
+t_max = 2000
+temp_factor = 30000
+burn_factor = 0.001
+t_min = -20
 
 class FireDynamics:
+    t_burn = 300
 
     def __init__(self):
         self.grid = 0
@@ -33,26 +37,51 @@ class FireDynamics:
         self.update_fire()
         self.update_material()
 
+    def burn_temp_coeff(self):
+        coeff = np.copy(self.temp)
+        coeff = t_max / (coeff + 1) * self.fire
+        return coeff
+
     def update_material(self):
-        self.matrix[:, :, indices["material"]] -= self.fire * dt * c_burn
+        burn_rate = self.burn_temp_coeff() * self.fire * burn_factor
+        self.matrix[:, :, indices["material"]] -= dt * burn_rate
 
     def update_fire(self):
-        self.matrix[:, :, indices["fire"]] = self.material * self.temp * (self.temp > t_fire)
+        new_fire = np.ones(self.fire.shape)
+        # new_fire[self.material <= 0] = 0
+        new_fire[self.temp <= self.t_burn] = 0
+        self.matrix[:, :, indices["fire"]] = new_fire
+
 
     def update_temperature(self):
-        temp_conduct = gaussian_filter(self.temp, sigma=0.1, mode='nearest', order=2)
-        temp_rad = gaussian_filter(self.temp, sigma=7, mode='nearest')
-        temp_diff = (self.temp + dt * temp_rad) / (1 + dt)
+        gaussian_sigma_low = 0.1
+        gaussian_sigma_high = 0.6
+        heating_curve = 0.2
+        temp_conduct = gaussian_filter(self.temp, sigma=gaussian_sigma_low, mode='nearest', order=0) - gaussian_filter(
+            self.temp, sigma=gaussian_sigma_high, mode='nearest', order=0)
 
-        self.matrix[:, :, indices["temp"]] = temp_diff
-        self.matrix[:, :, indices["temp"]] += temp_conduct * dt * 0.0001
-        self.matrix[:, :, indices["temp"]] += self.material * self.fire * dt
+        temp_burn = self.burn_temp_coeff() ** heating_curve * self.temp
+
+        new_temp = self.temp + dt * (temp_burn - temp_conduct)
+        new_temp[new_temp >= t_max] = t_max
+        new_temp[new_temp <= t_min] = t_min
+        new_temp[get_attribute(self.grid, "walls") != wall_categories[no_walls_symbol]] *= 0.1
+
+        self.matrix[:, :, indices["temp"]] = new_temp
+
 
     def update_smoke(self):
-        smoke_around = gaussian_filter(self.smoke, sigma=(1, 1), mode='nearest', order=0)
-        smoke_diff = smoke_around - self.smoke
-        self.matrix[:, :, indices["smoke"]] += dt * smoke_diff
-        self.matrix[:, :, indices["smoke"]] += self.fire * dt
+        smoke_temp = np.copy(self.smoke)
+        for i in range(2):
+            smoke_around = gaussian_filter(smoke_temp, sigma=1.1, mode='nearest', order=0)
+            smoke_diff = smoke_around - smoke_temp
+
+            val = smoke_temp + dt * (smoke_diff + self.fire)
+            val[get_attribute(self.grid, "walls") != wall_categories[no_walls_symbol]] = -0.05
+            smoke_temp = val
+
+        self.matrix[:, :, indices["smoke"]] = smoke_temp + val
+
 
     def bound_grid(self):
         pass

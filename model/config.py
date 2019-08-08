@@ -11,6 +11,7 @@ dt = 1 / frequency * speed
 
 # Map
 map_file = "maps/arts-centre.txt"
-wall_symbols = "%#"
-no_walls_symbol = '\''
-wall_categories = {"%": 1, "#": 2, no_walls_symbol: 0}
+wall_symbols = "%#."
+no_walls_symbol = ' '
+exit_symbol = 'E'
+wall_categories = {"%": 1, "#": 2, '.': 3, no_walls_symbol: 0, exit_symbol: 4}

@@ -55,6 +55,7 @@ class Animation:
 
     def make_walls_color(self, state, image):
         image[:, :, :][state.get_attribute("walls") != wall_categories[no_walls_symbol]] = 0.5
+        image[:, :, :][state.get_attribute("walls") == wall_categories[exit_symbol]] = [0, 1, 0]
 
     def make_image_colors(self, state):
         image = np.ones((self.grid.num_rows, self.grid.num_cols, 3))
