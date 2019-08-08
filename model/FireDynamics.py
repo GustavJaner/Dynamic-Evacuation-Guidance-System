@@ -67,20 +67,20 @@ class FireDynamics:
         new_temp[new_temp <= t_min] = t_min
         new_temp[get_attribute(self.grid, "walls") != wall_categories[no_walls_symbol]] *= 0.1
 
+
         self.matrix[:, :, indices["temp"]] = new_temp
 
 
     def update_smoke(self):
-        smoke_temp = np.copy(self.smoke)
-        for i in range(2):
-            smoke_around = gaussian_filter(smoke_temp, sigma=1.1, mode='nearest', order=0)
-            smoke_diff = smoke_around - smoke_temp
+        sigma_val = 2
+        smoke_around = gaussian_filter(self.smoke, sigma=sigma_val, mode='nearest', order=0)
+        smoke_diff = smoke_around - self.smoke
 
-            val = smoke_temp + dt * (smoke_diff + self.fire)
-            val[get_attribute(self.grid, "walls") != wall_categories[no_walls_symbol]] = -0.05
-            smoke_temp = val
+        val = self.smoke + (smoke_diff + self.fire * 0.25)
 
-        self.matrix[:, :, indices["smoke"]] = smoke_temp + val
+        val[get_attribute(self.grid, "walls") != wall_categories[no_walls_symbol]] = - 1 / sigma_val ** 2
+
+        self.matrix[:, :, indices["smoke"]] = val
 
 
     def bound_grid(self):
