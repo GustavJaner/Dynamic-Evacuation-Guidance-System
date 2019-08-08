@@ -42,9 +42,18 @@ class PeopleDynamics:
         return people_list
 
     def move_people_in_cell(self, i, j):
-        (n1, n2) = self.grid.get_random_neighbor(i, j)
+        if (self.grid.get_attribute("walls", i, j) == wall_categories[exit_symbol]):
+            return (i, j)
+        (n1, n2) = self.grid.get_attraction_neighbor(i, j)  # self.grid.get_random_neighbor(i, j)
+        direction = np.array([n1, n2]) - np.array([i, j], dtype=float)
         while self.forbidden_cell(n1, n2):
+            direction *= 0.9
+            val = np.array([i, j]) + direction
+            (n1, n2) = [int(round(val[0])), int(round(val[1]))]
+        if (n1, n2) == (i, j):
             (n1, n2) = self.grid.get_random_neighbor(i, j)
+            while self.forbidden_cell(n1, n2):
+                (n1, n2) = self.grid.get_random_neighbor(i, j)
         return n1, n2, 1
 
     def forbidden_cell(self, i, j):

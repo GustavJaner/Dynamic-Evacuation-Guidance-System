@@ -134,6 +134,28 @@ class Grid:
         col = get_random_1d_neighbor(self.num_cols, j)
         return row, col
 
+    def get_attraction_neighbor(self, i, j):
+        q1 = 1
+        q2 = 1
+        k = 1
+        p = np.array([i, j])
+        attraction_direction = 0
+        size = np.shape(self.matrix)
+        for x in range(size[0]):
+            for y in range(size[1]):
+                if self.map[x, y] == 'E':
+                    exit = np.array([x, y])
+                    r = exit - p
+                    force = 1 / np.sum(r * r) ** 0.5
+                    force_dir = force * r
+                    attraction_direction += force_dir
+        # row = get_random_1d_neighbor(self.num_rows, i)
+        # col = get_random_1d_neighbor(self.num_cols, j)
+        row = int(round(i + attraction_direction[0]))
+        col = int(round(j + attraction_direction[1]))
+        # print(i, j, row, col)
+        return row, col
+
     def get_attribute(self, attribute, row=-1, column=-1):
         if row < 0 and column < 0:
             return self.matrix[:, :, indices[attribute]]
