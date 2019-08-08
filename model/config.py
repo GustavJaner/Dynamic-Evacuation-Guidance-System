@@ -8,6 +8,9 @@ c_rad = 0.1
 speed = 60
 frequency = 200
 dt = 1 / frequency * speed
+num_simulation_steps = 100
+num_people = 3
+num_fires = 3
 
 # Map
 map_file = "maps/arts-centre.txt"
@@ -16,3 +19,4 @@ just_wall_symbols = "%#"
 no_walls_symbol = '\''
 exit_symbol = 'E'
 wall_categories = {"%": 1, "#": 2, '.': 3, no_walls_symbol: 0, exit_symbol: 4}
+evacuation_alg = 'gas'

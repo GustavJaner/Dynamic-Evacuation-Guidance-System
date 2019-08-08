@@ -76,11 +76,12 @@ class FireDynamics:
         smoke_around = gaussian_filter(self.smoke, sigma=sigma_val, mode='nearest', order=0)
         smoke_diff = smoke_around - self.smoke
 
-        val = self.smoke + (smoke_diff + self.fire * 0.25)
+        val = self.smoke + (smoke_diff + self.fire) * dt
 
         val[get_attribute(self.grid, "walls") != wall_categories[no_walls_symbol]] = - 1 / sigma_val ** 2
 
         self.matrix[:, :, indices["smoke"]] = val
+        print(np.max(self.smoke))
 
 
     def bound_grid(self):

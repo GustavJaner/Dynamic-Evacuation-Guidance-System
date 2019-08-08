@@ -34,6 +34,7 @@ class PeopleDynamics:
     def calculate_people_movement(self):
         # nice_grid = self.nice_grid()
         # self.grid.ng = nice_grid
+        # if evacuation_alg == 'dijkstra':
         self.grid.make_dijkstra()
         people_list = []
         for i in range(self.matrix.shape[0]):
@@ -85,17 +86,12 @@ class PeopleDynamics:
     def move_people_in_cell(self, i, j):
         if (self.grid.get_attribute("walls", i, j) == wall_categories[exit_symbol]):
             return (i, j, 1)
-        (n1, n2) = self.grid.get_attraction_neighbor2(i, j)
-        direction = np.array([n1, n2]) - np.array([i, j], dtype=float)
-        while self.forbidden_cell(n1, n2):
-            #print("D", direction)
-            direction *= 0.9
-            val = np.array([i, j]) + direction
-            (n1, n2) = [int(round(val[0])), int(round(val[1]))]
-        if (n1, n2) == (i, j):
-            (n1, n2) = self.grid.get_random_neighbor(i, j)
-            while self.forbidden_cell(n1, n2):
-                (n1, n2) = self.grid.get_random_neighbor(i, j)
+        if evacuation_alg == 'gas':
+            (n1, n2) = self.grid.get_attraction_neighbor_gas(i, j)
+        else:
+            (n1, n2) = self.grid.get_attraction_neighbor_dijkstra(i, j)
+        if self.forbidden_cell(n1, n2):
+            (n1, n2) = self.grid.get_attraction_neighbor_dijkstra(i, j)
         return n1, n2, 1
 
     def forbidden_cell(self, i, j):
