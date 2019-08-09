@@ -12,6 +12,7 @@ class PeopleDynamics:
         self.people = 0
         self.grid = grid
         self.ng = 0
+        self.i = 0
 
     def update_people_dynamics(self):
         self.matrix = np.copy(self.grid.matrix)
@@ -35,13 +36,17 @@ class PeopleDynamics:
         # nice_grid = self.nice_grid()
         # self.grid.ng = nice_grid
         # if evacuation_alg == 'dijkstra':
+        self.i += 1
         self.grid.make_dijkstra()
         people_list = []
         for i in range(self.matrix.shape[0]):
             for j in range(self.matrix.shape[1]):
                 people_in_cell = self.people[i, j]
                 while people_in_cell > 0:
-                    movement = self.move_people_in_cell(i, j)
+                    if self.i % 3 == 0:
+                        movement = self.move_people_in_cell(i, j)
+                    else:
+                        movement = (i, j, 1)
                     # movement = self.move_with_nice_grid(i, j, nice_grid)
                     people_list.append(movement)
                     people_in_cell -= 1
@@ -86,8 +91,8 @@ class PeopleDynamics:
     def move_people_in_cell(self, i, j):
         if (self.grid.get_attribute("walls", i, j) == wall_categories[exit_symbol]):
             return (i, j, 1)
-        if evacuation_alg == 'gas':
-            (n1, n2) = self.grid.get_attraction_neighbor_gas(i, j)
+        if evacuation_alg == 'magnetic':
+            (n1, n2) = self.grid.get_attraction_neighbor_magnetic(i, j)
         else:
             (n1, n2) = self.grid.get_attraction_neighbor_dijkstra(i, j)
         if self.forbidden_cell(n1, n2):

@@ -5,7 +5,7 @@ from utils import *
 
 t_max = 2000
 temp_factor = 30000
-burn_factor = 0.001
+burn_factor = 0.01
 t_min = -20
 
 class FireDynamics:
@@ -48,7 +48,7 @@ class FireDynamics:
 
     def update_fire(self):
         new_fire = np.ones(self.fire.shape)
-        # new_fire[self.material <= 0] = 0
+        new_fire[self.material <= 0] = 0
         new_fire[self.temp <= self.t_burn] = 0
         self.matrix[:, :, indices["fire"]] = new_fire
 
@@ -81,7 +81,7 @@ class FireDynamics:
         val[get_attribute(self.grid, "walls") != wall_categories[no_walls_symbol]] = - 1 / sigma_val ** 2
 
         self.matrix[:, :, indices["smoke"]] = val
-        print(np.max(self.smoke))
+        # print(np.max(self.smoke))
 
 
     def bound_grid(self):
@@ -89,5 +89,5 @@ class FireDynamics:
 
     def fire_map(self, matrix):
         arr = np.copy(matrix[:, :, indices["fire"]])
-        arr = arr * (arr > 100)
+        arr = arr * (arr > 200)
         return arr

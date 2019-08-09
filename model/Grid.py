@@ -140,7 +140,7 @@ class Grid:
         col = get_random_1d_neighbor(self.num_cols, j)
         return row, col
 
-    def get_attraction_neighbor_gas(self, i, j):
+    def get_attraction_neighbor_magnetic(self, i, j):
         p = np.array([i, j])
         attraction_direction = 0
         size = np.shape(self.matrix)
@@ -228,7 +228,7 @@ class Grid:
                         elif self.map[a, b] in wall_symbols:
                             pass
                         elif self.get_attribute("fire", a, b) != 0:
-                            dijkstra_array[index + offsets[ii], index] = 1
+                            dijkstra_array[index + offsets[ii], index] = self.get_attribute("smoke", i, j)
                         else:
                             dijkstra_array[index + offsets[ii], index] = 1
 

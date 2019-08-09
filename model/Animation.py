@@ -8,6 +8,7 @@ from config import *
 class Animation:
     color_yellow_offset = 0.2
     color_blue_offset = 0.6
+    last_people = 0
 
     def __init__(self, grid):
         self.fig, self.ax = plt.subplots()
