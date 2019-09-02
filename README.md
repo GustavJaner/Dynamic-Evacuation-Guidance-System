@@ -1,7 +1,7 @@
-# Dynamic-Evacuation-Guidance-System
-Cork case study - Dynamic Evacuation Guidance System
+# Dynamic Evacuation Guidance System
+Cork case study
 
-## Modelling an evacuation guidance system in Python 3.7.3
+## Modelling an evacuation guidance system in Python 3.7
 - Generic spread of fire with different materials
 - Generic spread of smoke
 - Dynamically find the optimal path to safest exit
